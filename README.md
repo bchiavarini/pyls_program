@@ -34,4 +34,8 @@
 ``` bash
 python3 -m pyls
 ```
-The program will list the content of the directory described in the JSON file. Note that hidden directories will not be displayed.
+The program will list the contents of the directory described in the JSON file. Note that, if no additional parameters are specified, hidden directories will not be displayed.
+3. To see a list of all available options and their descriptions, you can use the --help flag:
+``` bash
+python3 -m pyls --help
+```
