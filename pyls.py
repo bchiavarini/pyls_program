@@ -38,6 +38,8 @@ def main():
                         help='List all contents including hidden files and directories')
     parser.add_argument('-l', dest='long_listing', action='store_true',
                         help='Use a long listing format')
+    parser.add_argument('-r', dest='reverse', action='store_true',
+                        help='Reverse order while sorting')
     args = parser.parse_args()
     config_file= Path(CONFIG_FILEPATH)
     if not config_file.exists() or not config_file.is_file():
@@ -50,6 +52,9 @@ def main():
         raise JsonDecoderException("structure.json cannot be read")
 
     content = list_content(directories_structure,include_hidden=args.include_hidden,long_listing=args.long_listing)
+    if args.reverse:
+        # reverse the content order
+        content.reverse()
     if args.long_listing:
         # in case of long listing, print in column
         for el in content:
