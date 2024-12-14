@@ -24,7 +24,7 @@ def format_output(content:List[str]) -> str:
 
 def main():
     parser = argparse.ArgumentParser(prog="ls",description=f"List the contents of directories described in {CONFIG_FILEPATH}")
-    parser.add_argument('-A', dest='all', action='store_true',
+    parser.add_argument('-A', dest='include_hidden', action='store_true',
                         help='List all contents including hidden files and directories')
     args = parser.parse_args()
     config_file= Path(CONFIG_FILEPATH)
@@ -37,7 +37,7 @@ def main():
     except Exception:
         raise JsonDecoderException("structure.json cannot be read")
 
-    content = list_content(directories_structure,include_hidden=args.all)
+    content = list_content(directories_structure,include_hidden=args.include_hidden)
     formatted_output = format_output(content)
     print(formatted_output)
 
