@@ -1,4 +1,4 @@
-from pyls import list_content, format_output
+from pyls import list_content
 
 MOCK_STRUCTURE = {
   "name": "interpreter",
@@ -34,8 +34,6 @@ def test_include_hidden():
     result = list_content(MOCK_STRUCTURE, include_hidden=True)
     assert result == [".gitignore", "LICENSE", "README.md"]
 
-
-def test_format_output():
-    content = ["file1.txt", "file2.txt"]
-    result = format_output(content)
-    assert result == "file1.txt file2.txt"
+def test_long_list():
+    result = list_content(MOCK_STRUCTURE, long_listing=True)
+    assert result == ["drwxr-xr-x   1071 Nov 14 06:57 LICENSE", "drwxr-xr-x     83 Nov 14 06:57 README.md"]
