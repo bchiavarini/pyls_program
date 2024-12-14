@@ -10,6 +10,9 @@ CONFIG_FILEPATH = "structure.json"
 class JsonDecoderException(Exception):
     """Exception raised when the config Json object cannot be decoded."""
 
+class ArgsValidationException(Exception):
+    """Exception raised when argument does not pass validation."""
+
 
 def convert_time(epoch_time: int) -> str:
     # convert epoch time to datetime relative to the user time zone
@@ -21,7 +24,8 @@ def convert_time(epoch_time: int) -> str:
 def list_content(structure: Dict[str, Any],
                  include_hidden: bool = False,
                  long_listing: bool = False,
-                 time_sort:bool = False,) -> List[str]:
+                 time_sort:bool = False,
+                 filter:Optional[str]=None) -> List[str]:
     content: List[str] = []
 
     if time_sort:
@@ -35,6 +39,15 @@ def list_content(structure: Dict[str, Any],
         if el["name"].startswith(".") and not include_hidden:
             # ignore the hidden files
             continue
+
+        if filter:
+            if filter == "file" and "contents" in el:
+                # if the element has contents it is a directory: ignore
+                continue
+            if filter == "dir" and not "contents" in el:
+                # if the element does not have contents it is a file: ignore
+                continue
+
         if long_listing:
             # convert epoch time to human-readable time
             modified_time = convert_time(el["time_modified"])
@@ -57,7 +70,13 @@ def main():
                         help='Reverse order while sorting')
     parser.add_argument('-t', dest='time_sort', action='store_true',
                         help='Sort by modification time (oldest first)')
+    parser.add_argument("--filter", dest='filter', type=str,
+                        help="Filter the content to list only files or directories. Only 'file' and 'dir' values are accepted.")
     args = parser.parse_args()
+
+    if args.filter and args.filter not in ["file", "dir"]:
+        raise ArgsValidationException(f"'{args.filter}' is not a valid filter criteria. Available filters are 'dir' and 'file'")
+
     config_file = Path(CONFIG_FILEPATH)
     if not config_file.exists() or not config_file.is_file():
         raise FileNotFoundError("structure.json not found")
@@ -71,7 +90,8 @@ def main():
     content = list_content(directories_structure,
                            include_hidden=args.include_hidden,
                            long_listing=args.long_listing,
-                           time_sort=args.time_sort)
+                           time_sort=args.time_sort,
+                           filter=args.filter)
     if args.reverse:
         # reverse the content order
         content.reverse()

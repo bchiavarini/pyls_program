@@ -2,7 +2,7 @@ import pytest
 import sys
 import json
 from pathlib import Path
-from pyls import main,CONFIG_FILEPATH,JsonDecoderException
+from pyls import main,CONFIG_FILEPATH,JsonDecoderException,ArgsValidationException
 
 def restore_original_config_file(filename:str):
     file_to_restore=Path(filename)
@@ -65,3 +65,10 @@ def test_reverse_function(capfd):
     finally:
         # restore the original file
         restore_original_config_file(temp_name)
+
+def test_validation_for_filter_param():
+    sys.argv = ["pyls.py","--filter","folder"]
+    # test case of a not existing structure json
+    with pytest.raises(ArgsValidationException):
+        main()
+

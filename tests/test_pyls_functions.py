@@ -42,3 +42,26 @@ def test_time_sort():
     # make sure of the order of the epoch time
     result = list_content(MOCK_STRUCTURE, time_sort=True)
     assert result == ["README.md","LICENSE"]
+
+def test_filtering():
+    structure = MOCK_STRUCTURE.copy()
+    dir_element= {
+      "name": "ast",
+      "size": 4096,
+      "time_modified": 1699957739,
+      "permissions": "-rw-r--r--",
+      "contents": [
+        {
+          "name": "go.mod",
+          "size": 225,
+          "time_modified": 1699957780,
+          "permissions": "-rw-r--r--"
+        }]
+    }
+    structure["contents"].append(dir_element)
+    # test filtering the files
+    result_files = list_content(structure, filter="file")
+    assert result_files == ["LICENSE", "README.md"]
+    # test filtering the directories
+    result_dirs = list_content(structure, filter="dir")
+    assert result_dirs == ["ast"]
