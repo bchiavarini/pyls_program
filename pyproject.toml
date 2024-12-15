@@ -1,0 +1,23 @@
+[project]
+name = "pyls"
+version = "1.0"
+description = "Python Command Line Tool for listing directory contents"
+requires-python = ">=3.8"
+readme = "README.md"
+classifiers=[
+    "Programming Language :: Python",
+]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[project.scripts]
+pyls = "pyls:main"
+
+[build-system]
+requires = ["setuptools>=64.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
