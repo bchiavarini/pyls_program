@@ -77,6 +77,7 @@ def list_content(
     human_readable: bool = False,
 ) -> List[str]:
     content: List[str] = []
+    # the default root is the root dir specified in the json
     root = structure
     name_prefix = ""
     # ignore relative path to the current directory
@@ -85,12 +86,12 @@ def list_content(
         if path.startswith("./"):
             # this path is relative to the main folder. Ignore the relative prefix
             path = path.lstrip("./")
-            # add the relative path to filenames
+            # add the relative path to prefix that will be used for filenames
             prefix = "./"
 
         # split the path to get the subdirectories
         path_structure = path.split("/")
-        # build the relative prefix for file
+        # build the relative prefix that will be used for filenames
         if len(path_structure) > 1:
             prefix += "/".join(path_structure[:-1]) + "/"
 
@@ -109,6 +110,7 @@ def list_content(
         content_to_parse = sorted_content
     else:
         content_to_parse = root["contents"]
+
     for el in content_to_parse:
         if el["name"].startswith(".") and not include_hidden:
             # ignore the hidden files
@@ -203,7 +205,7 @@ def main():
         with open(config_file) as f:
             directories_structure = json.load(f)
     except Exception:
-        raise JsonDecoderException("structure.json cannot be read")
+        raise JsonDecoderException(f"{CONFIG_FILEPATH} cannot be read")
 
     content = list_content(
         directories_structure,
