@@ -26,6 +26,26 @@ def convert_time(epoch_time: int) -> str:
     formatted_time = dt_object.strftime('%b %d %H:%M')
     return formatted_time
 
+def convert_size(size_bytes: int) -> str:
+    units = ["B","K", "M", "G"]
+    size = float(size_bytes)
+    if size < 1024:
+        # if there are only bytes, do not add the unit label
+        return str(int(size))
+    unit_index = 0
+    # keep dividing until the resulting size is <1024
+    while size >= 1024 and unit_index < len(units) - 1:
+        size /= 1024
+        unit_index += 1
+    # format the result
+    if size.is_integer():
+        # if it is an integer do no add decimals
+        size = int(size)
+    else:
+        # if it is a float, it is rounded to 2 decimals
+        size = round(size,1)
+
+    return f"{size}{units[unit_index]}"
 
 def get_root(structure: Dict[str, Any],path:str) -> Optional[Dict[str, Any]]:
     root_dir:Optional[Dict[str, Any]] = None
@@ -46,7 +66,8 @@ def list_content(structure: Dict[str, Any],
                  long_listing: bool = False,
                  time_sort:bool = False,
                  filter:Optional[str]=None,
-                 path:Optional[str]=None) -> List[str]:
+                 path:Optional[str]=None,
+                 human_readable: bool = False) -> List[str]:
     content: List[str] = []
     root = structure
     name_prefix = ""
@@ -96,6 +117,9 @@ def list_content(structure: Dict[str, Any],
         if long_listing:
             # convert epoch time to human-readable time
             modified_time = convert_time(el["time_modified"])
+            if human_readable:
+                # convert the size to a human-readable format
+                el["size"] = convert_size(el["size"])
             # format the output to align the elements in columns
             content_el = f"{el['permissions']:<10} {el['size']:>6} {modified_time:<10} {name_prefix}{el["name"]}"
             content.append(content_el)
@@ -105,7 +129,7 @@ def list_content(structure: Dict[str, Any],
 
 def main():
     parser = argparse.ArgumentParser(prog="ls",
-                                     description=f"List the contents of directories described in {CONFIG_FILEPATH}")
+                                     description=f"List the contents of directories described in {CONFIG_FILEPATH}",add_help=False)
     parser.add_argument('-A', dest='include_hidden', action='store_true',
                         help='List all contents including hidden files and directories')
     parser.add_argument('-l', dest='long_listing', action='store_true',
@@ -118,8 +142,15 @@ def main():
                         help="Filter the content to list only files or directories. Only 'file' and 'dir' values are accepted.")
     parser.add_argument("path", type=str,nargs="?",
                         help="List the content relatively to a specific path. Paths relative to the main directory are supported (Optional)")
+    parser.add_argument('-h', dest='human_readable', action='store_true',
+                        help='With -l, print size like 2K 100M 3G etc.')
+    parser.add_argument('--help', dest='help', action='store_true',
+                        help='Show this help message and exit')
 
     args = parser.parse_args()
+    if args.help:
+        parser.print_help()
+        exit(0)
 
     if args.filter and args.filter not in ["file", "dir"]:
         raise ArgsValidationException(f"'{args.filter}' is not a valid filter criteria. Available filters are 'dir' and 'file'")
@@ -139,7 +170,8 @@ def main():
                            long_listing=args.long_listing,
                            time_sort=args.time_sort,
                            filter=args.filter,
-                           path=args.path)
+                           path=args.path,
+                           human_readable=args.human_readable)
     if not content:
         raise NoContentException(f"No content was found. Try with different filters")
     if args.reverse:

@@ -112,6 +112,9 @@ def test_retrieving_path():
     with pytest.raises(PathNotFound):
         list_content(structure, path="./ast/test")
 
+def test_human_readable_size():
+    result = list_content(MOCK_STRUCTURE, long_listing=True,human_readable=True)
+    assert result == ["drwxr-xr-x   1.0K Nov 14 09:21 LICENSE", "drwxr-xr-x     83 Nov 14 06:57 README.md"]
 
 
 
