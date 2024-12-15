@@ -2,7 +2,7 @@ import pytest
 import sys
 import json
 from pathlib import Path
-from pyls import main,CONFIG_FILEPATH,JsonDecoderException,ArgsValidationException
+from pyls import main,CONFIG_FILEPATH,JsonDecoderException,ArgsValidationException,NoContentException
 
 def restore_original_config_file(filename:str):
     file_to_restore=Path(filename)
@@ -72,3 +72,29 @@ def test_validation_for_filter_param():
     with pytest.raises(ArgsValidationException):
         main()
 
+def test_filters_without_results():
+    # save the original file with a different name
+    temp_name = f"{CONFIG_FILEPATH}_bk"
+    rename_config_file(temp_name)
+    # create a mocked config file
+    mocked_json = {"contents":
+                       [
+                           {"name": "folder1",
+                            "contents":
+                                [
+                                    {"name": "file2.txt"}
+                                ]
+                            }
+                       ]
+    }
+    config_file = Path(CONFIG_FILEPATH)
+    with config_file.open("w") as f:
+        json.dump(mocked_json, f)
+    sys.argv = ["pyls.py", "--filter", "dir","folder1"]
+    # test case of a not existing structure json
+    try:
+        with pytest.raises(NoContentException):
+            main()
+    finally:
+        # restore the original file
+        restore_original_config_file(temp_name)

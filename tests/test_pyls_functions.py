@@ -1,4 +1,6 @@
-from pyls import list_content
+import copy
+import pytest
+from pyls import list_content,PathNotFound
 
 MOCK_STRUCTURE = {
   "name": "interpreter",
@@ -44,7 +46,7 @@ def test_time_sort():
     assert result == ["README.md","LICENSE"]
 
 def test_filtering():
-    structure = MOCK_STRUCTURE.copy()
+    structure = copy.deepcopy(MOCK_STRUCTURE)
     dir_element= {
       "name": "ast",
       "size": 4096,
@@ -65,3 +67,51 @@ def test_filtering():
     # test filtering the directories
     result_dirs = list_content(structure, filter="dir")
     assert result_dirs == ["ast"]
+
+def test_retrieving_path():
+    structure = copy.deepcopy(MOCK_STRUCTURE)
+    dir_element = {
+        "name": "ast",
+        "size": 4096,
+        "time_modified": 1699957739,
+        "permissions": "-rw-r--r--",
+        "contents": [
+            {
+                "name": "go.mod",
+                "size": 225,
+                "time_modified": 1699957780,
+                "permissions": "-rw-r--r--"
+            }]
+    }
+    structure["contents"].append(dir_element)
+    # test path relative to the main folder
+    result_main_folder_relative = list_content(structure, path=".")
+    assert result_main_folder_relative == ["LICENSE", "README.md","ast"]
+    # test path relative to the main folder using different prefix
+    result_main_folder_relative2 = list_content(structure, path="./")
+    assert result_main_folder_relative2 == ["LICENSE", "README.md", "ast"]
+    # test a directory path
+    result_directory = list_content(structure, path="ast")
+    assert result_directory == ["go.mod"]
+    # test a file path
+    result_file = list_content(structure, path="LICENSE")
+    assert result_file == ["LICENSE"]
+    # test a relative path of a file
+    result_relative_file = list_content(structure, path="./LICENSE")
+    assert result_relative_file == ["./LICENSE"]
+    # test a file in a directory path
+    result_file_in_dir = list_content(structure, path="ast/go.mod")
+    assert result_file_in_dir == ["ast/go.mod"]
+    # test a relative path of a file in a directory path
+    result_file_in_dir_rel = list_content(structure, path="./ast/go.mod")
+    assert result_file_in_dir_rel == ["./ast/go.mod"]
+    # test a not existing directory
+    with pytest.raises(PathNotFound):
+        list_content(structure, path="./test")
+    # test a not existing file
+    with pytest.raises(PathNotFound):
+        list_content(structure, path="./ast/test")
+
+
+
+

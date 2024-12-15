@@ -13,6 +13,12 @@ class JsonDecoderException(Exception):
 class ArgsValidationException(Exception):
     """Exception raised when argument does not pass validation."""
 
+class PathNotFound(Exception):
+    """Exception raised when the selected path cannot be found in the structure"""
+
+class NoContentException(Exception):
+    """Exception raised when no content can be found in the structure"""
+
 
 def convert_time(epoch_time: int) -> str:
     # convert epoch time to datetime relative to the user time zone
@@ -21,20 +27,59 @@ def convert_time(epoch_time: int) -> str:
     return formatted_time
 
 
+def get_root(structure: Dict[str, Any],path:str) -> Optional[Dict[str, Any]]:
+    root_dir:Optional[Dict[str, Any]] = None
+    for el in structure["contents"]:
+        if el["name"] == path:
+            if not "contents" in el:
+                # this is a file. Use the same json structure
+                root_dir = {"contents":[el]}
+            else:
+                root_dir = el
+    if not root_dir:
+        # it means that the path does not exist
+        raise PathNotFound(f"cannot access '{path}': No such file or directory")
+    return root_dir
+
 def list_content(structure: Dict[str, Any],
                  include_hidden: bool = False,
                  long_listing: bool = False,
                  time_sort:bool = False,
-                 filter:Optional[str]=None) -> List[str]:
+                 filter:Optional[str]=None,
+                 path:Optional[str]=None) -> List[str]:
     content: List[str] = []
+    root = structure
+    name_prefix = ""
+    # ignore relative path to the current directory
+    if path and path not in [".","./"] :
+        prefix = ""
+        if path.startswith("./"):
+            # this path is relative to the main folder. Ignore the relative prefix
+            path = path.lstrip("./")
+            # add the relative path to filenames
+            prefix = "./"
+
+        # split the path to get the subdirectories
+        path_structure = path.split("/")
+        # build the relative prefix for file
+        if len(path_structure) > 1:
+            prefix += "/".join(path_structure[:-1]) + "/"
+
+        for p in path_structure:
+            # choose recursively the given path as root directory
+            root = get_root(root,p)
+
+        # add the prefix to the name only if the contents are files
+        if not "name" in root:
+            # if there are only contents with no name it means that the resulting path is a path of a single file
+            name_prefix = prefix
 
     if time_sort:
         # sort the contents in structure by time
-        sorted_content=sorted(structure["contents"], key=lambda x: x["time_modified"])
+        sorted_content=sorted(root["contents"], key=lambda x: x["time_modified"])
         content_to_parse = sorted_content
     else:
-        content_to_parse = structure["contents"]
-
+        content_to_parse = root["contents"]
     for el in content_to_parse:
         if el["name"].startswith(".") and not include_hidden:
             # ignore the hidden files
@@ -52,12 +97,11 @@ def list_content(structure: Dict[str, Any],
             # convert epoch time to human-readable time
             modified_time = convert_time(el["time_modified"])
             # format the output to align the elements in columns
-            content_el = f"{el['permissions']:<10} {el['size']:>6} {modified_time:<10} {el["name"]}"
+            content_el = f"{el['permissions']:<10} {el['size']:>6} {modified_time:<10} {name_prefix}{el["name"]}"
             content.append(content_el)
         else:
-            content.append(el["name"])
+            content.append(f"{name_prefix}{el['name']}")
     return content
-
 
 def main():
     parser = argparse.ArgumentParser(prog="ls",
@@ -72,6 +116,9 @@ def main():
                         help='Sort by modification time (oldest first)')
     parser.add_argument("--filter", dest='filter', type=str,
                         help="Filter the content to list only files or directories. Only 'file' and 'dir' values are accepted.")
+    parser.add_argument("path", type=str,nargs="?",
+                        help="List the content relatively to a specific path")
+
     args = parser.parse_args()
 
     if args.filter and args.filter not in ["file", "dir"]:
@@ -91,7 +138,10 @@ def main():
                            include_hidden=args.include_hidden,
                            long_listing=args.long_listing,
                            time_sort=args.time_sort,
-                           filter=args.filter)
+                           filter=args.filter,
+                           path=args.path)
+    if not content:
+        raise NoContentException(f"No content was found. Try with different filters")
     if args.reverse:
         # reverse the content order
         content.reverse()
