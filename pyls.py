@@ -141,7 +141,7 @@ def main():
     parser.add_argument("--filter", dest='filter', type=str,
                         help="Filter the content to list only files or directories. Only 'file' and 'dir' values are accepted.")
     parser.add_argument("path", type=str,nargs="?",
-                        help="List the content relatively to a specific path. Paths relative to the main directory are supported (Optional)")
+                        help=" (Optional) List the contents relative to a specific path. Paths relative to the main directory are also supported")
     parser.add_argument('-h', dest='human_readable', action='store_true',
                         help='With -l, print size like 2K 100M 3G etc.')
     parser.add_argument('--help', dest='help', action='store_true',
