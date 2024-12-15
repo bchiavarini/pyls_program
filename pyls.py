@@ -117,7 +117,7 @@ def main():
     parser.add_argument("--filter", dest='filter', type=str,
                         help="Filter the content to list only files or directories. Only 'file' and 'dir' values are accepted.")
     parser.add_argument("path", type=str,nargs="?",
-                        help="List the content relatively to a specific path")
+                        help="List the content relatively to a specific path. Paths relative to the main directory are supported (Optional)")
 
     args = parser.parse_args()
 
