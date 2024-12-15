@@ -32,6 +32,26 @@ MOCK_STRUCTURE = {
 }
 
 
+def add_a_directory_to_structure():
+    structure = copy.deepcopy(MOCK_STRUCTURE)
+    dir_element = {
+        "name": "ast",
+        "size": 4096,
+        "time_modified": 1699957739,
+        "permissions": "-rw-r--r--",
+        "contents": [
+            {
+                "name": "go.mod",
+                "size": 225,
+                "time_modified": 1699957780,
+                "permissions": "-rw-r--r--",
+            }
+        ],
+    }
+    structure["contents"].append(dir_element)
+    return structure
+
+
 def test_list_content():
     result = list_content(MOCK_STRUCTURE)
     assert result == ["LICENSE", "README.md"]
@@ -57,22 +77,7 @@ def test_time_sort():
 
 
 def test_filtering():
-    structure = copy.deepcopy(MOCK_STRUCTURE)
-    dir_element = {
-        "name": "ast",
-        "size": 4096,
-        "time_modified": 1699957739,
-        "permissions": "-rw-r--r--",
-        "contents": [
-            {
-                "name": "go.mod",
-                "size": 225,
-                "time_modified": 1699957780,
-                "permissions": "-rw-r--r--",
-            }
-        ],
-    }
-    structure["contents"].append(dir_element)
+    structure = add_a_directory_to_structure()
     # test filtering the files
     result_files = list_content(structure, filter="file")
     assert result_files == ["LICENSE", "README.md"]
@@ -82,22 +87,8 @@ def test_filtering():
 
 
 def test_retrieving_path():
-    structure = copy.deepcopy(MOCK_STRUCTURE)
-    dir_element = {
-        "name": "ast",
-        "size": 4096,
-        "time_modified": 1699957739,
-        "permissions": "-rw-r--r--",
-        "contents": [
-            {
-                "name": "go.mod",
-                "size": 225,
-                "time_modified": 1699957780,
-                "permissions": "-rw-r--r--",
-            }
-        ],
-    }
-    structure["contents"].append(dir_element)
+    structure = add_a_directory_to_structure()
+
     # test path relative to the main folder
     result_main_folder_relative = list_content(structure, path=".")
     assert result_main_folder_relative == ["LICENSE", "README.md", "ast"]
